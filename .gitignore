@@ -1,0 +1,14 @@
+# Ignorar archivos de configuración local
+config.ini
+.env
+
+# Ignorar archivos de logs
+*.log
+
+# Ignorar directorios generados automáticamente
+__pycache__/
+.venv/
+
+build/
+dist/
+gui.spec
