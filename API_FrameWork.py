@@ -1,5 +1,6 @@
 import requests
 import pandas as pd
+import numpy as np
 from datetime import datetime,  timedelta
 """
 milliseconds_to_minutes: Convertir milisegundos a minutos
