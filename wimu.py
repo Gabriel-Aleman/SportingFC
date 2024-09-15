@@ -515,6 +515,8 @@ class myTeamAPIWimu(API):
             self.session["Actividades de la sesión"] = self.session["Actividades de la sesión"].apply(lambda val: val.split(",")) #ACTIVIDADES -> LIST
 
             self.session.set_index("id", inplace=True)
+            self.session["Creado"]=pd.to_datetime(self.session['Creado'], errors='coerce')
+
             return True
         else: 
             return False
@@ -546,22 +548,32 @@ def genInformResults():
 #FUNCIONES DE COLOREADO:
 #%%
 def color_unico(val):
-    return 'background-color: #d6fdff; color: red'
+    return 'background-color: #FFFFFF; color: red'
 
+# Función para truncar los valores a los dos primeros caracteres
+def truncate(val):
+    try:
+        myVal = float(val)
+    except:
+        return val
+    else:
+        return val[:4] if isinstance(val, str) else val
 
 # Función para aplicar el estilo a la tabla de semaforo:
 def colorear_celdas(val):
-    abs_val = abs(val)
-    if abs_val < 0.5:
-        color = 'background-color: green; color: white;'
-    elif abs_val>= 0.5 and abs_val < 1:
-        color = 'background-color: yellow; color: black;'
-    elif abs_val>= 1 and abs_val < 1.5:
-        color = 'background-color: orange; color: white;'
-    elif abs_val>= 1.5:
-        color = 'background-color: red; color: white;'
-    else:
+    try:
+        abs_val = abs(float(val))
+    except:
         color = 'background-color: grey; color: white;'
+    else:
+        if abs_val < 0.5:
+            color = 'background-color: green; color: white;'
+        elif abs_val>= 0.5 and abs_val < 1:
+            color = 'background-color: yellow; color: black;'
+        elif abs_val>= 1 and abs_val < 1.5:
+            color = 'background-color: orange; color: white;'
+        elif abs_val>= 1.5:
+            color = 'background-color: red; color: white;'
     return color
 
 # Las siguientes funciones, solo pueden ser empleadas luego de haber seguido los siguientes pasos: 
@@ -611,9 +623,9 @@ getMDAYTable: Función que busca el tipo de MD que fue cada sesión y genera una
     -tablaSemaforo: Resultados de Z - score por sesión según el MD para todos los jugadores
 """
 def getMDAYTable():
-    global tablaSemaforo, tablaSemaforo_styled
+    global tablaSemaforo, tablaSemaforo_styled, matchType
     tempList  = []
-    matchType = ["Tipo de MatchDay"]
+    matchType = []
     for n in wimuApp.listaSesiones: #Buscar el tipo de MD que fue cada sesión y obtener los resultados por sesión
         for llave, array in md_dic.items():  
             if n in array:
@@ -634,29 +646,30 @@ def getMDAYTable():
     #Formmatear la tabla "tablaSemaforo":
     #-------------------------------------------------------------------------------------
     ## Combinar los DataFrames
-    tablaSemaforo = pd.concat(tempList, axis=1).sort_index().reset_index().round(1) #CONCATENAR RESULTADOS
-    ## Convertir la lista en un DataFrame
-    nueva_fila_df = pd.DataFrame([matchType], columns=tablaSemaforo.columns)
+    tablaSemaforo = pd.concat(tempList, axis=1).sort_index() #CONCATENAR RESULTADOS
 
-    ## Concatenar la nueva fila al inicio del DataFrame
-    tablaSemaforo = pd.concat([nueva_fila_df, tablaSemaforo], ignore_index=True)
-    ## Extraer la primera fila
-    first_row = tablaSemaforo.iloc[0]
-
-    ## Eliminar la primera fila ya que ahora está en el MultiIndex
-    tablaSemaforo= tablaSemaforo.set_index("Jugador")
-    tablaSemaforo.columns = pd.MultiIndex.from_tuples(list(zip(tablaSemaforo.columns, first_row[1:])))
-    ## Eliminar la primera línea usando el índice real
-    tablaSemaforo = tablaSemaforo.drop(tablaSemaforo.index[0])
-
-    tablaSemaforo_styled = tablaSemaforo.style.format('{:.1f}').map(colorear_celdas)
+    try:
+        fechas = wimuApp.session.set_index("Nombre").loc[wimuApp.listaSesiones]["Creado"].tolist()
+    except KeyError:
+        newColumns= [(tablaSemaforo.columns[i], matchType[i], None) for i in range (len(tablaSemaforo.columns))]
+    else:
+        fechas=[fecha.strftime('%Y-%m-%d %H:%M') for fecha in fechas]
+        newColumns= [(tablaSemaforo.columns[i], matchType[i], fechas[i]) for i in range (len(tablaSemaforo.columns))]
     
+    newColumns = pd.MultiIndex.from_tuples(newColumns, names=["SESIONES", "MD", "FECHA"])
+
+    tablaSemaforo = pd.DataFrame(tablaSemaforo.to_numpy(), columns=newColumns, index=tablaSemaforo.index)
+    tablaSemaforo=tablaSemaforo.fillna("Sin datos")
+    tablaSemaforo_styled = tablaSemaforo.astype(str).style.map(colorear_celdas)
+    tablaSemaforo_styled = tablaSemaforo_styled.format(truncate)
+
     return tablaSemaforo, tablaSemaforo_styled
 
-
 def SemIndv(sessionValue):       
+    tablaSemaforoV1 = tablaSemaforo.copy()
+    tablaSemaforoV1.columns=tablaSemaforoV1.columns.droplevel("FECHA")
 
-    seleccion=tablaSemaforo[sessionValue].copy()
+    seleccion=tablaSemaforoV1[sessionValue]
     md=seleccion.columns[0]
 
     datos = seleccion[md]

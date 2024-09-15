@@ -2,10 +2,23 @@ from wimu import *
 from graphs import *
 import streamlit as st
 from streamlit_extras.colored_header import colored_header
+from streamlit_extras.let_it_rain import rain
 from io import BytesIO
 
+def loadAllMyData():
+    global tablaSemaforo, tablaSemaforo_styled, md_ser, md_dic, md_table,informe_Jug, informe_JugZ, informe_JugZProm, informe_JugEst,informe_Ses, informe_SesEst,informe_SesZ, informe_SesZProm
+    informe_Jug, informe_JugZ, informe_JugZProm, informe_JugEst, informe_Ses, informe_SesEst, informe_SesZ, informe_SesZProm = genInformResults()
+    
+    #Generar tablas de M-Day
+    try:
+        md_table, md_dic, md_ser            = getMdayZscore()
+        tablaSemaforo, tablaSemaforo_styled = getMDAYTable()
+    except:       
+        return False
+    else: 
+        return True 
 
-
+        
 def graficos_Jugador():
     show_graphSesDis        = st.checkbox("Distancia")
     show_graphSesHSR        = st.checkbox("HSRAbsDistance")
@@ -90,7 +103,7 @@ def grafico_Hist():
 #%% ESTADO DE INICIO:
 
 st.set_page_config(
-    page_title="Sporting Football Club",
+    page_title="SFC Data-App",
     page_icon="https://cdn.icon-icons.com/icons2/861/PNG/512/Soccer_icon-icons.com_67819.png", 
     layout="wide",
 )
@@ -112,6 +125,14 @@ with st.sidebar:
         st.link_button("WIMU (API Service)",url="https://wimupro.wimucloud.com/commons/restapi/")
         st.link_button("WIMU",url="https://wimupro.wimucloud.com/")
 
+
+    if st.button ("Push me"):
+        rain(
+            emoji="⚽",
+            font_size=54,
+            falling_speed=4,
+            animation_length=[5,""],
+        )
         
 
 #VARIABLES DE ESTADO
@@ -122,8 +143,11 @@ if 'informAlreadyDone' not in st.session_state:
 if 'sesListAlreadyDone' not in st.session_state:
     st.session_state.sesListAlreadyDone = False
 
-if 'onChange' not in st.session_state:
-    st.session_state.onChange = [False, False]
+if 'onLast' not in st.session_state:
+    st.session_state.onLast = [False, False]
+
+if 'onCurrent' not in st.session_state:
+    st.session_state.onCurrent = [False, False]
 
 if 'informAlreadyDoneX1' not in st.session_state:
     st.session_state.informAlreadyDoneX1 = False
@@ -143,19 +167,36 @@ if 'last_option' not in st.session_state:
 
 # INICIO:-
 #%%--------------------------------------------------------------
+
+image_path = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTD-ViQjMELIoVlV44DnXliYZoV2knLJ218zQ&s"
+# Redondear bordes de la imagen usando HTML y CSS
+html_code = f"""
+<style>
+img {{
+    border-radius: 15px;
+}}
+</style>
+<img src="{image_path}" width="100">
+"""
+
 # Título de la aplicación
-st.title("SFC: Data - APP")
+col1, col2 = st.columns([1,7])
+
+with col2:
+    st.title("SFC: Data - APP")
+with col1:
+    st.markdown(html_code, unsafe_allow_html=True)
+    
 st.markdown('-----------------------')
 
 col1, col2 = st.columns(2)
-
 with col1:
-    colored_header(label="Clubes suscritos en la base de datos", description="", color_name="violet-70", )
+    colored_header(label="Clubes en la base de datos", description="", color_name="violet-70", )
     with st.expander("Clubes"):
         st.dataframe(wimuApp.Club)
 
 with col2:
-    colored_header(label="Equipos suscritos en la base de datos", description="", color_name="violet-70", )
+    colored_header(label="Equipos en la base de datos", description="", color_name="violet-70", )
     with st.expander("Equipos"):
         st.dataframe(wimuApp.teams)
 
@@ -177,12 +218,6 @@ with st.expander("Jugadores"):
 #Cargar datos anteriores o desde cero:
 #.............................................................................................................
 onSes =  st.toggle("🔄 Cargar listado de sesiones de archivo", key="Cargar listado")
-if st.session_state.onChange[0] != onSes: #Si hubo un cambio en la opción de cargar
-    st.session_state.sesListAlreadyDone =False
-    st.session_state.show_OpsInform =False
-    st.session_state.informAlreadyDone = False
-    st.session_state.opcionEq_seleccionadaLast = ""
-    st.session_state.onChange[0] = not(onSes)
 
 if onSes: #Sí quiero cargar datos anteriores:
     with st.expander("Cargar listado de sesiones"):
@@ -192,7 +227,6 @@ if onSes: #Sí quiero cargar datos anteriores:
             archivoFormatoCorrecto = wimuApp.loadSesList(archivoListSes)
 
             if archivoFormatoCorrecto:
-                st.session_state.show_widgets = True
                 st.session_state.sesListAlreadyDone =True
                 st.session_state.opcionEq_seleccionadaLast = opcionEq_seleccionada
                 st.session_state.myDateRes  = pd.to_datetime(wimuApp.session["Creado"].iloc[-1])
@@ -217,13 +251,19 @@ else:
             NewType = None
 
     with col1:
-        if st.button(f'Generar listado de sesiones para {opcionEq_seleccionada} - ({myDateSelect})', disabled= onSes):
+        if st.button(f'Generar listado de sesiones para\n {opcionEq_seleccionada} - ({myDateSelect})', disabled= onSes):
             st.session_state.opcionEq_seleccionadaLast = opcionEq_seleccionada
             with st.spinner('Cargando datos...'):
                 st.session_state.myDateRes  = pd.to_datetime(wimuApp.getAllSessions_V2(type=NewType), format="%m/%d/%Y")
-            st.session_state.show_widgets = True
             st.session_state.sesListAlreadyDone = True
 
+if st.session_state.onLast[0] != onSes: #Si hubo un cambio en la opción de cargar
+    print(st.session_state.onLast)
+    st.session_state.sesListAlreadyDone =False
+    st.session_state.show_OpsInform =False
+    st.session_state.informAlreadyDone = False
+    st.session_state.opcionEq_seleccionadaLast = ""
+    st.session_state.onLast[0] = onSes
 
 #Mostrar opciones tras cargar el listado de sesiones:
 #.............................................................................................................
@@ -236,7 +276,7 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
 
     selected_optionInf = st.radio(
         'Seleccione una opción de informe:',
-        ["Generar informe completo (varias las sesiones)","Generar informe para solo una sesión"]
+        ["Generar informe completo (varias sesiones)","Generar informe para solo una sesión"]
     )
 
     # Actualizar el estado solo si la opción cambia
@@ -298,11 +338,8 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
         else:
 
             onInf =  st.toggle("🔄 Cargar informe completo de archivo", key="Cargar informe")
-            if st.session_state.onChange[1] != onInf: #Si hubo un cambio en la opción de cargar
-                st.session_state.informAlreadyDone = False
-                st.session_state.opcionEq_seleccionadaLast = ""
-                st.session_state.onChange[1] = not(onInf)
-  
+
+                
             if onInf: #Sí quiero cargar datos anteriores:
                 with st.expander("Cargar informe"):
                     archivoInf = st.file_uploader("Elige un archivo", type=["csv"], key="inf")
@@ -310,13 +347,9 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
                         archivoFormatoCorrecto = wimuApp.loadInform(archivoInf)
 
                         if archivoFormatoCorrecto:
-                            st.session_state.show_widgets = True
                             st.session_state.informAlreadyDone = True
                             #.................................................................................................................................................
-                            informe_Jug, informe_JugZ, informe_JugZProm, informe_JugEst, informe_Ses, informe_SesEst, informe_SesZ, informe_SesZProm = genInformResults()
-                            #Generar tablas de M-Day
-                            md_table, md_dic, md_ser            = getMdayZscore()
-                            tablaSemaforo, tablaSemaforo_styled = getMDAYTable()
+                            st.session_state.semStatus = loadAllMyData()
                             #.................................................................................................................................................
                     
                         else:
@@ -356,25 +389,33 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
                         status_text.text(f"Progreso: {round(i*100)}%")
                         info_text.info("Esto puede tomar un momento...")
                     #.................................................................................................................................................
-                    informe_Jug, informe_JugZ, informe_JugZProm, informe_JugEst, informe_Ses, informe_SesEst, informe_SesZ, informe_SesZProm = genInformResults()
-                    #Generar tablas de M-Day
-                    md_table, md_dic, md_ser            = getMdayZscore()
-                    tablaSemaforo, tablaSemaforo_styled = getMDAYTable()
+                    st.session_state.semStatus = loadAllMyData()
                     #.................................................................................................................................................
                     
                     st.success("¡Proceso completado!")
                     st.markdown(f"## Informe de sesiones - {st.session_state.opcionEq_seleccionadaLast}")
                     st.session_state.informAlreadyDone = True
 
+  
+            if st.session_state.onLast[1] != onInf: #Si hubo un cambio en la opción de cargar
+                #st.session_state.show_OpsInform =False
+                st.session_state.informAlreadyDone = False
+                #st.session_state.opcionEq_seleccionadaLast = ""
+                st.session_state.onLast[1] = onInf
+
             if  st.session_state.informAlreadyDone: #Ya se generó el informe                
                 semaforo, tablas, graficos = st.tabs(["Semaforo", "Tablas completas", "Sesión / Jugador Específico"])
                 with semaforo:
-                    if st.checkbox("Semaforo completo"):
-                        st.write(tablaSemaforo_styled)
-                    if st.checkbox("Semaforo individual"):
-                        opcionTip_seleccionada = st.selectbox("Seleccione una sesión para el semaforo", wimuApp.listaSesiones)
-                        datos, seleccion, concat, seleccion_styled, concat_styled = SemIndv(opcionTip_seleccionada)
-                        st.write(concat_styled)
+                    if st.session_state.semStatus:
+                        if st.checkbox("Semaforo completo"):
+                            st.write(tablaSemaforo_styled)
+                        if st.checkbox("Semaforo individual"):
+                            opcionTip_seleccionada = st.selectbox("Seleccione una sesión para el semaforo", wimuApp.listaSesiones)
+                            datos, seleccion, concat, seleccion_styled, concat_styled = SemIndv(opcionTip_seleccionada)
+                            st.write(concat_styled)
+                    else:
+                        st.error('Error generando semaforo', icon="🚨")
+
                 with tablas:
                     col1, col2 = st. columns(2)
                     with col2:
@@ -392,21 +433,29 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
 
                         if opcionCompInform == "Visualizar por sesión":
                             if dataFInf:
+                                st.markdown("### Informe completo")
                                 st.write(informe_Ses.to_html(), unsafe_allow_html=True)
                             if estdFInf:
+                                st.markdown("### Estadísticas")
                                 st.write(informe_SesEst.to_html(), unsafe_allow_html=True)
                             if zScoreInf:
+                                st.markdown("### Z-Scores")
                                 st.write(informe_SesZ.to_html(), unsafe_allow_html=True)
                             if zScoreProm:
+                                st.markdown("### Z-Scores: Promedio")
                                 st.dataframe(informe_SesZProm)
                         else:
                             if dataFInf:
+                                st.markdown("### Informe completo")
                                 st.markdown(informe_Jug.to_html(), unsafe_allow_html=True)
                             if estdFInf:
+                                st.markdown("### Estadísticas")
                                 st.markdown(informe_JugEst.to_html(), unsafe_allow_html=True)
                             if zScoreInf:
+                                st.markdown("### Z-Scores")
                                 st.markdown(informe_JugZ.to_html(), unsafe_allow_html=True)
                             if zScoreProm:
+                                st.markdown("### Z-Scores: Promedio")
                                 st.dataframe(informe_JugZProm)
 
                 with graficos:
@@ -465,10 +514,11 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
                     def create_excel_file():
                         buffer = BytesIO()
                         with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+                            tablaSemaforo_styled.to_excel(writer, sheet_name='SEMAFORO')
+                            md_table.to_excel(writer, sheet_name='Z SCORE x MD')
 
                             informe_Jug.to_excel(writer, sheet_name='JUGADORES')
                             informe_JugEst.to_excel(writer, sheet_name='JUGADORES (Estadisticas)')
-                            
                             # Z: Score
                             s= "JUGADORES (z- Score)"
                             informe_JugZ.to_excel(writer, sheet_name=s, startrow=0, startcol=0)
@@ -486,6 +536,7 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
 
                             # Guardar el segundo DataFrame en la misma hoja pero en una posición diferente
                             informe_SesZProm.to_excel(writer, sheet_name=s, startrow=0, startcol=len(informe_SesZ.columns) + 4)
+
                         buffer.seek(0)
                         return buffer.getvalue()
                     
