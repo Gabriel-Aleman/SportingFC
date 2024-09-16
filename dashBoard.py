@@ -126,7 +126,7 @@ with st.sidebar:
         st.link_button("WIMU",url="https://wimupro.wimucloud.com/")
 
 
-    if st.button ("[Push me]"):
+    if st.button ("Push me"):
         rain(
             emoji="⚽",
             font_size=54,
@@ -457,7 +457,11 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
                     
                     
                     wimuApp.inform = opsGPR[4].loc[st.session_state.opcionSes_seleccionadaLast]
-                    wimuApp.inform.sort_index(inplace=True)
+                    if opsGPR[0]:
+                        wimuApp.inform.sort_index(inplace=True)
+                    else:
+                        wimuApp.inform.sort_values(by="Creado (fecha)")
+
                     with st.expander(f"Tabla: {st.session_state.opcionSes_seleccionadaLast}"):
                         resu=st.checkbox("Tabla de resultados")
                         estd=st.checkbox("Tabla de estadísticas")

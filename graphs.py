@@ -111,7 +111,7 @@ def playGraphAll(df,  tittle):
     a= df["Creado (fecha)"]
     # Crear la figura y los ejes
     fig, axs = plt.subplots(2, 2, figsize=(10, 8))
-    ang = 90
+    ang = 100
     # Primer gráfico
     axs[0, 0].plot(a,df["Distancia m"], color="r", marker='o')
     axs[0, 0].set_title("Distancia m", fontweight='bold')
