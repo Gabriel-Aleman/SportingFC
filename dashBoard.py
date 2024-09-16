@@ -126,7 +126,7 @@ with st.sidebar:
         st.link_button("WIMU",url="https://wimupro.wimucloud.com/")
 
 
-    if st.button ("Push me"):
+    if st.button ("[Push me]"):
         rain(
             emoji="⚽",
             font_size=54,
