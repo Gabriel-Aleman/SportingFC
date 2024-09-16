@@ -315,7 +315,7 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
 
                     st.markdown("### Estadísticas")
                     with st.expander("Estadísticas"):
-                        est=wimuApp.inform.describe()
+                        est=wimuApp.inform.describe().drop(columns=["Creado (fecha)", "Duración (min)"])
                         est.index=["Núm de datos","Promedio", "Desviación estandar", 'min', '25%', '50%', '75%', 'max']
                         st.dataframe(est)
 
@@ -351,7 +351,6 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
                             #.................................................................................................................................................
                             st.session_state.semStatus = loadAllMyData()
                             #.................................................................................................................................................
-                    
                         else:
                             st.error('El archivo subido no sigue el formato adecuado', icon="🚨")
 
@@ -398,11 +397,9 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
 
   
             if st.session_state.onLast[1] != onInf: #Si hubo un cambio en la opción de cargar
-                #st.session_state.show_OpsInform =False
                 st.session_state.informAlreadyDone = False
-                #st.session_state.opcionEq_seleccionadaLast = ""
                 st.session_state.onLast[1] = onInf
-
+            #.................................................................................................................................................
             if  st.session_state.informAlreadyDone: #Ya se generó el informe                
                 semaforo, tablas, graficos = st.tabs(["Semaforo", "Tablas completas", "Sesión / Jugador Específico"])
                 with semaforo:
@@ -428,86 +425,66 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
                         zScoreProm = st.checkbox("Tabla de Z-Scores promedio")
                         sesType = st.checkbox("Ver tipos de sesión")
 
+                        if opcionCompInform == "Visualizar por sesión":
+                            ops=[informe_Ses, informe_SesEst, informe_SesZ, informe_SesZProm]
+                        else:
+                            ops=[informe_Jug, informe_JugEst, informe_JugZ, informe_JugZProm]
+                        
+                        if dataFInf:
+                            st.markdown("### Informe completo")
+                            st.write(ops[0].to_html(), unsafe_allow_html=True)
+                        if estdFInf:
+                            st.markdown("### Estadísticas")
+                            st.write(ops[1].to_html(), unsafe_allow_html=True)
+                        if zScoreInf:
+                            st.markdown("### Z-Scores")
+                            st.write(ops[2].to_html(), unsafe_allow_html=True)
+                        if zScoreProm:
+                            st.markdown("### Z-Scores: Promedio")
+                            st.dataframe(ops[3])
                         if sesType:
                             st.write(md_ser)
-
-                        if opcionCompInform == "Visualizar por sesión":
-                            if dataFInf:
-                                st.markdown("### Informe completo")
-                                st.write(informe_Ses.to_html(), unsafe_allow_html=True)
-                            if estdFInf:
-                                st.markdown("### Estadísticas")
-                                st.write(informe_SesEst.to_html(), unsafe_allow_html=True)
-                            if zScoreInf:
-                                st.markdown("### Z-Scores")
-                                st.write(informe_SesZ.to_html(), unsafe_allow_html=True)
-                            if zScoreProm:
-                                st.markdown("### Z-Scores: Promedio")
-                                st.dataframe(informe_SesZProm)
-                        else:
-                            if dataFInf:
-                                st.markdown("### Informe completo")
-                                st.markdown(informe_Jug.to_html(), unsafe_allow_html=True)
-                            if estdFInf:
-                                st.markdown("### Estadísticas")
-                                st.markdown(informe_JugEst.to_html(), unsafe_allow_html=True)
-                            if zScoreInf:
-                                st.markdown("### Z-Scores")
-                                st.markdown(informe_JugZ.to_html(), unsafe_allow_html=True)
-                            if zScoreProm:
-                                st.markdown("### Z-Scores: Promedio")
-                                st.dataframe(informe_JugZProm)
 
                 with graficos:
                     opcionCompInform=st.radio("Datos a seleccionar", options=["Sesión", "Jugador"], key="123")               
                 
                     if opcionCompInform == "Sesión":
                         st.session_state.opcionSes_seleccionadaLast = st.selectbox("Seleccione una sesión", wimuApp.listaSesiones)
-                        wimuApp.inform = informe_Ses.loc[st.session_state.opcionSes_seleccionadaLast]
-                        wimuApp.inform.sort_index(inplace=True)
-                        with st.expander(f"Tabla: {st.session_state.opcionSes_seleccionadaLast}"):
-                            resu=st.checkbox("Tabla de resultados")
-                            estd=st.checkbox("Tabla de estadísticas")
-                            if resu:
-                                st.markdown(f"### Resultados: {st.session_state.opcionSes_seleccionadaLast}")
-                                st.write(wimuApp.inform )
-                            if estd:
-                                st.markdown(f"### Estadísticas: {st.session_state.opcionSes_seleccionadaLast}")
-                                st.write(informe_SesEst.loc[st.session_state.opcionSes_seleccionadaLast])
-                        with st.expander("Grafico de resultados"):
-                            graficos_Sesion()
-                        with st.expander("Histograma"):
-                            grafico_Hist()
-                        with st.expander("Diagrama de caja"):
-                            graficos_box()
-                        with st.expander("z-Score"):
-                            st.pyplot(barZ(informe_SesZ, informe_SesZProm,ses=st.session_state.opcionSes_seleccionadaLast))
-
-
+                        opsGPR=[True, informe_SesEst, informe_SesZ, informe_SesZProm, informe_Ses]
                     else: #VISUALIZAR por jugador
-                        st.session_state.opcionSes_seleccionadaLast = st.selectbox("Seleccione un jugador", wimuApp.listaJugadores)
-                        wimuApp.inform = informe_Jug.loc[st.session_state.opcionSes_seleccionadaLast]
-                        wimuApp.inform.sort_values(by="Creado (fecha)", inplace=True)
-                        with st.expander(f"Tabla: {st.session_state.opcionSes_seleccionadaLast}"):
-                            resu=st.checkbox("Tabla de resultados")
-                            estd=st.checkbox("Tabla de estadísticas")
-                            if resu:
-                                st.markdown(f"### Resultados: {st.session_state.opcionSes_seleccionadaLast}")
-                                st.write(wimuApp.inform )
-                            if estd:
-                                st.markdown(f"### Estadísticas: {st.session_state.opcionSes_seleccionadaLast}")
-                                st.write(informe_JugEst.loc[st.session_state.opcionSes_seleccionadaLast])
-                        with st.expander("Grafico de resultados"):
+                        st.session_state.opcionSes_seleccionadaLast = st.selectbox("Seleccione una sesión", wimuApp.listaJugadores)
+                        opsGPR=[False, informe_JugEst, informe_JugZ, informe_JugZProm, informe_Jug]
+                    
+                    
+                    wimuApp.inform = opsGPR[4].loc[st.session_state.opcionSes_seleccionadaLast]
+                    wimuApp.inform.sort_index(inplace=True)
+                    with st.expander(f"Tabla: {st.session_state.opcionSes_seleccionadaLast}"):
+                        resu=st.checkbox("Tabla de resultados")
+                        estd=st.checkbox("Tabla de estadísticas")
+                        if resu:
+                            st.markdown(f"### Resultados: {st.session_state.opcionSes_seleccionadaLast}")
+                            st.write(wimuApp.inform )
+                        if estd:
+                            st.markdown(f"### Estadísticas: {st.session_state.opcionSes_seleccionadaLast}")
+                            st.write(opsGPR[1].loc[st.session_state.opcionSes_seleccionadaLast])
+                            
+                    with st.expander("Grafico de resultados"):
+                        if opsGPR[0]:
+                            graficos_Sesion()
+                        else:
                             graficos_Jugador()
-                        with st.expander("Histograma"):
-                            grafico_Hist()
-                        with st.expander("Diagrama de caja"):
-                            graficos_box()
-                        with st.expander("Z-Score"):
-                            st.pyplot(barZ(informe_JugZ,informe_JugZProm,jugador=st.session_state.opcionSes_seleccionadaLast))
+                    with st.expander("Histograma"):
+                        grafico_Hist()
+                    with st.expander("Diagrama de caja"):
+                        graficos_box()
+                    with st.expander("z-Score"):
+                        st.pyplot(barZ(opsGPR[2], opsGPR[3],ses=st.session_state.opcionSes_seleccionadaLast))
 
+
+                   
                 st.markdown("-----------------------------------------------")
 
+                #DESCARGAR DATOS
                 with st.expander ("Descargar archivos 📁"):
                                                             
                     # DESCARGAR INFORME COMPLETO:

@@ -198,39 +198,40 @@ def sesGraphAll(df,  tittle):
     return fig
 
 
-def sesBoxAll(df,  tittle):
+def sesBoxAll(df,  tittle, type=""):
     # Crear la figura y los ejes
     fig, axs = plt.subplots(2, 2, figsize=(10, 8))
 
 
-    axs[0, 0].boxplot(df["Distancia m"])
+    sns.boxplot(x=df["Distancia m"], ax=axs[0, 0], color="#4287f5", linecolor="#2b2b2b", linewidth=.75)
     axs[0, 0].set_title("Distancia m", fontweight='bold')
     axs[0, 0].grid(axis="y")
     axs[0, 0].set_xlabel("Distribución")
 
 
     # Segundo gráfico
-    axs[0, 1].boxplot(df["HSRAbsDistance"])
+    sns.boxplot(x=df["HSRAbsDistance"], ax=axs[0, 1], color="#4287f5", linecolor="#2b2b2b", linewidth=.75)
     axs[0, 1].set_title('HSRAbsDistance', fontweight='bold')
     axs[0, 1].grid(axis="y")
     axs[0, 1].set_xlabel("Distribución")
 
 
     # Tercer gráfico
-    axs[1, 0].boxplot(df["highIntensityAccAbsCounter"])
+    sns.boxplot(x=df["highIntensityAccAbsCounter"], ax=axs[1, 0], color="#4287f5", linecolor="#2b2b2b", linewidth=.75)
     axs[1, 0].set_title('highIntensityAccAbsCounter', fontweight='bold')
     axs[1, 0].grid(axis="y")
     axs[1, 0].set_xlabel("Distribución")
 
 
     # Cuarto gráfico
-    axs[1, 1].boxplot(df["highIntensityDecAbsCounter"])
+    sns.boxplot(x=df["highIntensityDecAbsCounter"], ax=axs[1, 1], color="#4287f5", linecolor="#2b2b2b", linewidth=.75)
+
     axs[1, 1].set_title('highIntensityDecAbsCounter', fontweight='bold')
     axs[1, 1].grid(axis="y")        
     axs[1, 1].set_xlabel("Distribución")
 
 
-    fig.suptitle('Diagramas de caja (Sesión): '+tittle, fontsize=16, fontweight='bold')
+    fig.suptitle('Diagramas de caja: '+tittle, fontsize=16, fontweight='bold')
     plt.tight_layout()
 
     return fig
@@ -263,9 +264,9 @@ def sesHisytAll(df,  tittle, bins=10):
 
     axs[1, 1].grid(axis="y")        # Primer gráfico
 
-    fig.suptitle('Diagramas de caja (Sesión): '+tittle, fontsize=16,  fontweight='bold')
+    fig.suptitle('Diagramas de caja: '+tittle, fontsize=16,  fontweight='bold')
     plt.tight_layout()
-
+#TODO: SESION O JUGADOR SEGÚN GRÁFICO
     return fig
 
 def graficar_matriz_correlacion(df, title):
