@@ -1,9 +1,12 @@
 from wimu import *
 from graphs import *
 import streamlit as st
-from streamlit_extras.colored_header import colored_header
-from streamlit_extras.let_it_rain import rain
 from io import BytesIO
+
+from streamlit_extras.colored_header import colored_header
+from streamlit_extras.stylable_container import stylable_container
+from streamlit_extras.let_it_rain import rain
+
 
 def loadAllMyData():
     global tablaSemaforo, tablaSemaforo_styled, md_ser, md_dic, md_table,informe_Jug, informe_JugZ, informe_JugZProm, informe_JugEst,informe_Ses, informe_SesEst,informe_SesZ, informe_SesZProm
@@ -251,7 +254,20 @@ else:
             NewType = None
 
     with col1:
-        if st.button(f'Generar listado de sesiones para\n {opcionEq_seleccionada} - ({myDateSelect})', disabled= onSes):
+        # ESTILO BOTÓN:
+        
+        # Create buttons with st.button
+        with stylable_container(
+            "bses",
+            css_styles="""
+            button {
+                    background-color: #a82f51;
+                    color: white;
+            }""",
+        ):
+            bSesList = st.button(f'Generar listado de sesiones para\n {opcionEq_seleccionada} - ({myDateSelect})', disabled= onSes)
+
+        if bSesList:
             st.session_state.opcionEq_seleccionadaLast = opcionEq_seleccionada
             with st.spinner('Cargando datos...'):
                 st.session_state.myDateRes  = pd.to_datetime(wimuApp.getAllSessions_V2(type=NewType), format="%m/%d/%Y")
@@ -379,7 +395,18 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
                 start_date = start_date.strftime('%Y-%m-%d')
                 end_date = end_date.strftime('%Y-%m-%d')
 
-                if st.button(f'Generar informe completo: {start_date} / {end_date}'):
+                # Create buttons with st.button
+                with stylable_container(
+                    "bInf",
+                    css_styles="""
+                    button {
+                            background-color: #a82f51;
+                            color: white;
+                    }""",
+                ): 
+                    bCompInfo = st.button(f'Generar informe completo: {start_date} / {end_date}')
+                    
+                if bCompInfo:
                     progress_bar = st.progress(0)
                     status_text = st.empty()
                     info_text = st.empty()
@@ -392,7 +419,6 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
                     #.................................................................................................................................................
                     
                     st.success("¡Proceso completado!")
-                    st.markdown(f"## Informe de sesiones - {st.session_state.opcionEq_seleccionadaLast}")
                     st.session_state.informAlreadyDone = True
 
   
@@ -400,7 +426,8 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
                 st.session_state.informAlreadyDone = False
                 st.session_state.onLast[1] = onInf
             #.................................................................................................................................................
-            if  st.session_state.informAlreadyDone: #Ya se generó el informe                
+            if  st.session_state.informAlreadyDone: #Ya se generó el informe       
+                st.markdown(f"## Informe de sesiones - {st.session_state.opcionEq_seleccionadaLast}")
                 semaforo, tablas, graficos = st.tabs(["Semaforo", "Tablas completas", "Sesión / Jugador Específico"])
                 with semaforo:
                     if st.session_state.semStatus:

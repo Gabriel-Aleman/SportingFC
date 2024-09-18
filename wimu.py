@@ -551,29 +551,38 @@ def color_unico(val):
     return 'background-color: #FFFFFF; color: red'
 
 # Función para truncar los valores a los dos primeros caracteres
-def truncate(val):
+def truncate(val, dec=4):
     try:
         myVal = float(val)
     except:
         return val
     else:
-        return val[:4] if isinstance(val, str) else val
+       return str(round(myVal, dec))
 
 # Función para aplicar el estilo a la tabla de semaforo:
 def colorear_celdas(val):
     try:
-        abs_val = abs(float(val))
+        abs_val = float(val)
     except:
         color = 'background-color: grey; color: white;'
     else:
-        if abs_val < 0.5:
+        if abs_val < 0.5 and abs_val > -0.5:
             color = 'background-color: green; color: white;'
+        
+        #POSITIVOS:
         elif abs_val>= 0.5 and abs_val < 1:
             color = 'background-color: yellow; color: black;'
         elif abs_val>= 1 and abs_val < 1.5:
             color = 'background-color: orange; color: white;'
         elif abs_val>= 1.5:
             color = 'background-color: red; color: white;'
+        #NEGATIVOS:
+        elif abs_val<= -0.5 and abs_val > -1:
+            color = 'background-color: #a2e6fc; color: white;'
+        elif abs_val<= -1 and abs_val > -1.5:
+            color = 'background-color: #24b3e3; color: white;'
+        elif abs_val<= -1.5:
+            color = 'background-color: #003ffc; color: white;'
     return color
 
 # Las siguientes funciones, solo pueden ser empleadas luego de haber seguido los siguientes pasos: 
@@ -651,17 +660,23 @@ def getMDAYTable():
     try:
         fechas = wimuApp.session.set_index("Nombre").loc[wimuApp.listaSesiones]["Creado"].tolist()
     except KeyError:
-        newColumns= [(tablaSemaforo.columns[i], matchType[i], None) for i in range (len(tablaSemaforo.columns))]
+        newColumns= [(tablaSemaforo.columns[i], "  "+matchType[i], None) for i in range (len(tablaSemaforo.columns))]
     else:
-        fechas=[fecha.strftime('%Y-%m-%d %H:%M') for fecha in fechas]
-        newColumns= [(tablaSemaforo.columns[i], matchType[i], fechas[i]) for i in range (len(tablaSemaforo.columns))]
+        fechas= pd.DataFrame(fechas)[0].dt.date
+        newColumns= [(fechas[i], " "+tablaSemaforo.columns[i], " "+matchType[i]) for i in range (len(tablaSemaforo.columns))]
     
-    newColumns = pd.MultiIndex.from_tuples(newColumns, names=["SESIONES", "MD", "FECHA"])
-
+    newColumns = pd.MultiIndex.from_tuples(newColumns, names=["FECHA", "MD", "SESIONES"])
     tablaSemaforo = pd.DataFrame(tablaSemaforo.to_numpy(), columns=newColumns, index=tablaSemaforo.index)
-    tablaSemaforo=tablaSemaforo.fillna("Sin datos")
+    #tablaSemaforo=tablaSemaforo.fillna(0)
+    tablaSemaforo = pd.DataFrame(tablaSemaforo.to_numpy(), columns=newColumns, index=tablaSemaforo.index)
+    tablaSemaforo=tablaSemaforo.fillna("Sin asistencia")
+    tablaSemaforo_STR=tablaSemaforo.astype(str)
+    tablaSemaforo_STR.iloc[:1] = tablaSemaforo_STR.iloc[:1].apply(lambda x: ' ' + x)
+
     tablaSemaforo_styled = tablaSemaforo.astype(str).style.map(colorear_celdas)
+    
     tablaSemaforo_styled = tablaSemaforo_styled.format(truncate)
+
 
     return tablaSemaforo, tablaSemaforo_styled
 

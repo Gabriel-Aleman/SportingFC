@@ -79,12 +79,9 @@ def sesGraph(df, column, tittle, myColor="r"):
     return fig
 
 def playGraph(df, column, tittle, myColor="r"):
-    a= df["Creado (fecha)"]
 
     fig, ax = plt.subplots()
-    ax.plot(a, df[column], color=myColor, linestyle="--", marker='o')
-    ax.set_xticks(a)
-    ax.set_xticklabels(df.index)
+    ax.plot(df[column], color=myColor, linestyle="--", marker='o')
     ax.grid(axis="y")
     ax.tick_params(axis='x', rotation=90) #90 grados para que las etiquetas estén horizontales
     ax.set_title(f'Resultados ({column}): '+tittle, fontweight='bold')
@@ -108,43 +105,34 @@ def sesHist(df, column, tittle,  bins=10):
 
 
 def playGraphAll(df,  tittle):
-    a= df["Creado (fecha)"]
     # Crear la figura y los ejes
     fig, axs = plt.subplots(2, 2, figsize=(10, 8))
-    ang = 100
+    ang = 40
     # Primer gráfico
-    axs[0, 0].plot(a,df["Distancia m"], color="r", marker='o')
+    axs[0, 0].plot(df["Distancia m"], color="r", marker='o')
     axs[0, 0].set_title("Distancia m", fontweight='bold')
     axs[0, 0].tick_params(axis='x', labelrotation=ang)
-    axs[0, 0].set_xticks(a)
-    axs[0, 0].set_xticklabels(df.index)
     axs[0, 0].grid(axis="y")
 
 
     # Segundo gráfico
-    axs[0, 1].plot(a,df["HSRAbsDistance"], color='g', marker='o')
+    axs[0, 1].plot(df["HSRAbsDistance"], color='g', marker='o')
     axs[0, 1].set_title('HSRAbsDistance', fontweight='bold')
     axs[0, 1].tick_params(axis='x', labelrotation=ang)
-    axs[0, 1].set_xticks(a)
-    axs[0, 1].set_xticklabels(df.index)
     axs[0, 1].grid(axis="y")
 
 
     # Tercer gráfico
-    axs[1, 0].plot(a,df["highIntensityAccAbsCounter"], color='b', marker='o')
+    axs[1, 0].plot(df["highIntensityAccAbsCounter"], color='b', marker='o')
     axs[1, 0].set_title('highIntensityAccAbsCounter', fontweight='bold')
     axs[1, 0].tick_params(axis='x', labelrotation=ang)
-    axs[1, 0].set_xticks(a)
-    axs[1, 0].set_xticklabels(df.index)
     axs[1, 0].grid(axis="y")
 
 
     # Cuarto gráfico
-    axs[1, 1].plot(a,df["highIntensityDecAbsCounter"], color='m', marker='o')
+    axs[1, 1].plot(df["highIntensityDecAbsCounter"], color='m', marker='o')
     axs[1, 1].set_title('highIntensityDecAbsCounter', fontweight='bold')
     axs[1, 1].tick_params(axis='x', labelrotation=ang)
-    axs[1, 1].set_xticks(a)
-    axs[1, 1].set_xticklabels(df.index)
     axs[1, 1].grid(axis="y")
 
     # Añadir título global a toda la figura
@@ -161,7 +149,7 @@ def sesGraphAll(df,  tittle):
     
     # Crear la figura y los ejes
     fig, axs = plt.subplots(2, 2, figsize=(10, 8))
-    ang = 60
+    ang = 40
     # Primer gráfico
     axs[0, 0].bar(a,df["Distancia m"], color='r')
     axs[0, 0].set_title("Distancia m", fontweight='bold')
@@ -266,7 +254,6 @@ def sesHisytAll(df,  tittle, bins=10):
 
     fig.suptitle('Diagramas de caja: '+tittle, fontsize=16,  fontweight='bold')
     plt.tight_layout()
-#TODO: SESION O JUGADOR SEGÚN GRÁFICO
     return fig
 
 def graficar_matriz_correlacion(df, title):
