@@ -117,13 +117,13 @@ with st.sidebar:
     url_imagen = 'https://upload.wikimedia.org/wikipedia/commons/8/89/Sporting_Football_Club_2019.png'
     st.image(url_imagen, caption='Sporting FC', width=140)
 
-    with st.expander("Contactos"):
+    with st.expander("📧 Contactos"):
         st.subheader("Datos del desarrollador") 
         st.text("Nombre: Gabriel Alemán Ruiz")
         st.text("Correo Electrónico: gabrieldejesusalemanruiz@gmail.com")
         st.text("Núm de teléfono: (+506) 8546-5843")
 
-    with st.expander("links"):
+    with st.expander("🔗 links"):
         st.link_button("Página principal",url="https://www.sporting.cr/")
         st.link_button("WIMU (API Service)",url="https://wimupro.wimucloud.com/commons/restapi/")
         st.link_button("WIMU",url="https://wimupro.wimucloud.com/")
@@ -265,7 +265,7 @@ else:
                     color: white;
             }""",
         ):
-            bSesList = st.button(f'Generar listado de sesiones para\n {opcionEq_seleccionada} - ({myDateSelect})', disabled= onSes)
+            bSesList = st.button(f'📝 Generar listado de sesiones para\n {opcionEq_seleccionada} - ({myDateSelect})', disabled= onSes)
 
         if bSesList:
             st.session_state.opcionEq_seleccionadaLast = opcionEq_seleccionada
@@ -288,7 +288,7 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
 
     # Crear el radio button con las opciones
     st.markdown(f"## Listado de sesiones - {st.session_state.opcionEq_seleccionadaLast}")
-    st.dataframe(wimuApp.session)
+    st.dataframe(wimuApp.session.reset_index(drop=True))
 
     selected_optionInf = st.radio(
         'Seleccione una opción de informe:',
@@ -309,7 +309,7 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
     if st.session_state.show_OpsInform:
         #INFORME DE 1 SOLA SESIÓN:
         #.............................................................................................................
-        if selected_optionInf=="Generar informe para solo una sesión":
+        if selected_optionInf=="📝 Generar informe para solo una sesión":
             opcionTip_seleccionada = st.selectbox('Selecciona una sesión:', wimuApp.session, index=0)
             if st.button(f"Generar informe para {opcionTip_seleccionada}"):
                 with st.spinner('Cargando datos...'):
@@ -386,14 +386,13 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
                     end_date = st.date_input(
                         "Selecciona la fecha de fin:",
                         min_value=st.session_state.myDateRes ,
-                        value=datetime.now().date()  , 
-                        max_value=datetime.now().date() 
+                        value=datetime.now(), 
+                        max_value=datetime.now() 
                     )
                 
                 st.write(f"Rango de fechas seleccionado: Desde {start_date} hasta {end_date}")
-                # Convertir fechas a strings para la consulta
-                start_date = start_date.strftime('%Y-%m-%d')
-                end_date = end_date.strftime('%Y-%m-%d')
+                # Convertir a '2024-09-19 23:59:59'
+                end_date = end_date + pd.Timedelta(days=1) - pd.Timedelta(seconds=1)
 
                 # Create buttons with st.button
                 with stylable_container(
@@ -404,7 +403,7 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
                             color: white;
                     }""",
                 ): 
-                    bCompInfo = st.button(f'Generar informe completo: {start_date} / {end_date}')
+                    bCompInfo = st.button(f'📝 Generar informe completo: {start_date} / {end_date}')
                     
                 if bCompInfo:
                     progress_bar = st.progress(0)

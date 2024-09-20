@@ -359,6 +359,8 @@ class myTeamAPIWimu(API):
 
         self.inform["Duración (min)"] = self.inform["Duración (min)"].apply(milliseconds_to_minutes) 
         self.inform["Creado (fecha)"] =	self.inform["Creado (fecha)"].apply(getMyDate)
+        self.inform['Creado (fecha)'] = self.inform['Creado (fecha)'].dt.strftime('%Y-%m-%d %H h')  # Formato YYYY-MM-DD
+
         if onlyOneSes:
             self.inform.drop(columns=["Sesión"], inplace=True)
         return self.inform
@@ -398,7 +400,15 @@ class myTeamAPIWimu(API):
         self.compInform.reset_index(drop=True, inplace=True)
 
         self.listaJugadores = np.sort(pd.unique(self.compInform["Jugador"])) #Lista de Jugadores en el informe
-        self.listaSesiones  = pd.unique(self.compInform["Sesión"])           #Lista de sesiones en el informe
+        #self.listaSesiones  = pd.unique(self.compInform["Sesión"])           #Lista de sesiones en el informe
+        
+        listadoDeSesiones= []
+        cop=self.compInform.copy().sort_values(by="Creado (fecha)", ascending=False)
+
+        for i in cop["Sesión"].tolist():
+            if i not in listadoDeSesiones:
+                listadoDeSesiones.append(i)
+        self.listaSesiones = listadoDeSesiones
         #Tenga presente que las sesiónes por defecto ya vienen ordenadas por fecha
 
     """
@@ -411,7 +421,7 @@ class myTeamAPIWimu(API):
     def getAllInformsByXData(self, data): #Sesión o Jugador
         if (data == "Sesión"):      #Ordenar por fecha
             dataX = "Jugador" 
-            self.compInformByXData = self.compInform.sort_values(by=["Creado (fecha)", "Duración (min)"], ascending=[False, True])
+            self.compInformByXData = self.compInform.sort_values(by=["Creado (fecha)", "Jugador"], ascending=[False, True])
 
         elif (data == "Jugador"):   #Ordenar por jugador (en ordén alfabetico)
             dataX = "Sesión" 
