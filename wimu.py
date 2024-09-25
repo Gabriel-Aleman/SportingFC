@@ -1,4 +1,5 @@
 from API_FrameWork import *
+import pytz
 
 # Define la zona horaria
 zona_horaria = pytz.timezone('America/Costa_Rica')  # Puedes cambiar la zona horaria
