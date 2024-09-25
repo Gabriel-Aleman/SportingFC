@@ -377,14 +377,14 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
                 with col1:
 
                     start_date = st.date_input(
-                        "Selecciona la fecha de inicio:",
+                        "📅 Selecciona la fecha de inicio:",
                         min_value=st.session_state.myDateRes ,
                         value=st.session_state.myDateRes , 
                         max_value= hoy
                     )
                 with col2:
                     end_date = st.date_input(
-                        "Selecciona la fecha de fin:",
+                        "📅 Selecciona la fecha de fin:",
                         min_value=st.session_state.myDateRes ,
                         value = hoy, 
                         max_value= hoy
@@ -427,7 +427,7 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
             #.................................................................................................................................................
             if  st.session_state.informAlreadyDone: #Ya se generó el informe       
                 st.markdown(f"## Informe de sesiones - {st.session_state.opcionEq_seleccionadaLast}")
-                semaforo, delta, std, tablas, graficos = st.tabs(["🚦Semaforo", "𝚫 Delta", "📊 Estadísticas MD", "🗂 Tablas completas", "📒 Sesión / Jugador Específico"])
+                semaforo, delta, std, tablas, graficos = st.tabs(["🚦Semaforo", "𝚫 Delta", "📊 Estadísticas MD", "📁 Tablas completas", "📒 Sesión / Jugador Específico"])
                 
                 with delta:
                     with st.expander("Varios jugadores"):
@@ -435,7 +435,7 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
                         l=wimuApp.getDeltaSes(input_ses)
                         col1, col2, col3, col4 = st.columns(4)
                         for i in l:
-                            st.markdown(f"### -Jugador: {i["Delta"].name}")
+                            st.markdown(f"### • {i["Delta"].name}")
                             with stylable_container(
                             key="container_with_border1",
                             css_styles="""

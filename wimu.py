@@ -6,7 +6,6 @@ zona_horaria = pytz.timezone('America/Costa_Rica')  # Puedes cambiar la zona hor
 
 # Obtén el Timestamp actual con la zona horaria
 hoy = pd.Timestamp(datetime.now(tz=zona_horaria)).tz_localize(None)
-
 #WIMU:
 
 try: #Leer token del archivo:
@@ -701,13 +700,16 @@ def color_unico(val):
     return 'background-color: #FFFFFF; color: red'
 
 # Función para truncar los valores a los dos primeros caracteres
-def truncate(val, dec=4):
+def truncate(val, dec=2):
     try:
         myVal = float(val)
     except:
         return val
     else:
-       return str(round(myVal, dec))
+       if myVal > 0:    
+           return "↑ "+str(round(myVal, dec))
+       else:
+           return "↓ "+str(round(myVal, dec))
 
 # Función para aplicar el estilo a la tabla de semaforo:
 def colorear_celdas(val):
@@ -721,20 +723,19 @@ def colorear_celdas(val):
         
         #POSITIVOS:
         elif abs_val>= 0.5 and abs_val < 1:
-            color = 'background-color: yellow; color: black;'
+            color = 'background-color: #FF6666; color: white;'
         elif abs_val>= 1 and abs_val < 1.5:
-            color = 'background-color: orange; color: white;'
+            color = 'background-color: #FF0000; color: white;'
         elif abs_val>= 1.5:
-            color = 'background-color: red; color: white;'
+            color = 'background-color: #990000; color: white;'
         #NEGATIVOS:
         elif abs_val<= -0.5 and abs_val > -1:
-            color = 'background-color: #a2e6fc; color: white;'
+            color = 'background-color: #66B2FF; color: white;'
         elif abs_val<= -1 and abs_val > -1.5:
-            color = 'background-color: #24b3e3; color: white;'
+            color = 'background-color: #0000FF; color: white;'
         elif abs_val<= -1.5:
-            color = 'background-color: #003ffc; color: white;'
+            color = 'background-color: #000066; color: white;'
     return color
-
 # Las siguientes funciones, solo pueden ser empleadas luego de haber seguido los siguientes pasos: 
 #   1-Crear una instancia del objeto que debe estar llamada "wimuApp" (de ningún otro modo servirá)
 #   2-Se debe generar el litstado de sesiones
@@ -810,7 +811,7 @@ def getMDAYTableV2():
         newColumns= [(tablaSemaforo.columns[i], "  "+matchType[i], None) for i in range (len(tablaSemaforo.columns))]
     else:
         fechas= pd.DataFrame(fechas)[0].dt.date
-        newColumns= [(fechas[i], " "+tablaSemaforo.columns[i], " "+matchType[i]) for i in range (len(tablaSemaforo.columns))]
+        newColumns= [(fechas[i], "    "+tablaSemaforo.columns[i], "    "+matchType[i]) for i in range (len(tablaSemaforo.columns))]
     
     newColumns = pd.MultiIndex.from_tuples(newColumns, names=["FECHA", "MD", "SESIONES"])
     tablaSemaforo = pd.DataFrame(tablaSemaforo.to_numpy(), columns=newColumns, index=tablaSemaforo.index)
@@ -859,7 +860,7 @@ def getMDAYTable():
         newColumns= [(tablaSemaforo.columns[i], matchType[i], None) for i in range (len(tablaSemaforo.columns))]
     else:
         fechas=[fecha.strftime('%Y-%m-%d %H:%M') for fecha in fechas]
-        newColumns= [(tablaSemaforo.columns[i], matchType[i], fechas[i]) for i in range (len(tablaSemaforo.columns))]
+        newColumns= [(tablaSemaforo.columns[i], "   "+matchType[i], "   "+fechas[i]) for i in range (len(tablaSemaforo.columns))]
     
     newColumns = pd.MultiIndex.from_tuples(newColumns, names=["SESIONES", "MD", "FECHA"])
 
