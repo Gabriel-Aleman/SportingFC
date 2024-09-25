@@ -5,7 +5,6 @@ from io import BytesIO
 
 from streamlit_extras.colored_header import colored_header
 from streamlit_extras.stylable_container import stylable_container
-from streamlit_navigation_bar import st_navbar
 from streamlit_extras.let_it_rain import rain
 
 
