@@ -107,5 +107,5 @@ class API:
             
         #QUERY de fecha
         if date:
-            myPagedResults = myPagedResults[myPagedResults['created'] >= fecha_definida]
+            myPagedResults = myPagedResults[myPagedResults['created'] >= date]
         return myPagedResults
