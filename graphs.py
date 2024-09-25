@@ -47,7 +47,7 @@ def barZ(df, dfProm, ses=None, jugador=None):
 
     ax.grid(axis="y")
     ax.set_title(f"Z scores: {tit}", fontweight='bold')
-    #ax.set_xticklabels(ids, rotation=90)
+    ax.set_xticklabels(ids, rotation=80)
     ax.legend(loc=(0,0.25))
     return fig
 
@@ -191,28 +191,28 @@ def sesBoxAll(df,  tittle, type=""):
     fig, axs = plt.subplots(2, 2, figsize=(10, 8))
 
 
-    sns.boxplot(x=df["Distancia m"], ax=axs[0, 0], color="#4287f5", linecolor="#2b2b2b", linewidth=.75)
+    sns.boxplot(x=df["Distancia m"], ax=axs[0, 0], color="#83cc64", linecolor="#2b2b2b", linewidth=.75)
     axs[0, 0].set_title("Distancia m", fontweight='bold')
     axs[0, 0].grid(axis="y")
     axs[0, 0].set_xlabel("Distribución")
 
 
     # Segundo gráfico
-    sns.boxplot(x=df["HSRAbsDistance"], ax=axs[0, 1], color="#4287f5", linecolor="#2b2b2b", linewidth=.75)
+    sns.boxplot(x=df["HSRAbsDistance"], ax=axs[0, 1], color="#83cc64", linecolor="#2b2b2b", linewidth=.75)
     axs[0, 1].set_title('HSRAbsDistance', fontweight='bold')
     axs[0, 1].grid(axis="y")
     axs[0, 1].set_xlabel("Distribución")
 
 
     # Tercer gráfico
-    sns.boxplot(x=df["highIntensityAccAbsCounter"], ax=axs[1, 0], color="#4287f5", linecolor="#2b2b2b", linewidth=.75)
+    sns.boxplot(x=df["highIntensityAccAbsCounter"], ax=axs[1, 0], color="#83cc64", linecolor="#2b2b2b", linewidth=.75)
     axs[1, 0].set_title('highIntensityAccAbsCounter', fontweight='bold')
     axs[1, 0].grid(axis="y")
     axs[1, 0].set_xlabel("Distribución")
 
 
     # Cuarto gráfico
-    sns.boxplot(x=df["highIntensityDecAbsCounter"], ax=axs[1, 1], color="#4287f5", linecolor="#2b2b2b", linewidth=.75)
+    sns.boxplot(x=df["highIntensityDecAbsCounter"], ax=axs[1, 1], color="#83cc64", linecolor="#2b2b2b", linewidth=.75)
 
     axs[1, 1].set_title('highIntensityDecAbsCounter', fontweight='bold')
     axs[1, 1].grid(axis="y")        
