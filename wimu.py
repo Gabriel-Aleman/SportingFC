@@ -5,7 +5,7 @@ import pytz
 zona_horaria = pytz.timezone('America/Costa_Rica')  # Puedes cambiar la zona horaria
 
 # Obtén el Timestamp actual con la zona horaria
-hoy = pd.Timestamp(datetime.now(tz=zona_horaria)).tz_localize(None)
+hoy = pd.Timestamp()
 #WIMU:
 
 try: #Leer token del archivo:
