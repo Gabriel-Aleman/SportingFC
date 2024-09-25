@@ -380,14 +380,14 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
                         "Selecciona la fecha de inicio:",
                         min_value=st.session_state.myDateRes ,
                         value=st.session_state.myDateRes , 
-                        max_value=datetime.now().date()
+                        max_value= hoy
                     )
                 with col2:
                     end_date = st.date_input(
                         "Selecciona la fecha de fin:",
                         min_value=st.session_state.myDateRes ,
-                        value=datetime.now(), 
-                        max_value=datetime.now() 
+                        value = hoy, 
+                        max_value= hoy
                     )
                 
                 st.write(f"Rango de fechas seleccionado: Desde {start_date} hasta {end_date}")
