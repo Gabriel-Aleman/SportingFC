@@ -5,6 +5,7 @@ from io import BytesIO
 
 from streamlit_extras.colored_header import colored_header
 from streamlit_extras.stylable_container import stylable_container
+from streamlit_navigation_bar import st_navbar
 from streamlit_extras.let_it_rain import rain
 
 
@@ -288,7 +289,7 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
 
     # Crear el radio button con las opciones
     st.markdown(f"## Listado de sesiones - {st.session_state.opcionEq_seleccionadaLast}")
-    st.dataframe(wimuApp.session.reset_index(drop=True))
+    st.dataframe(wimuApp.session.reset_index(drop=True).set_index("Nombre"))
 
     selected_optionInf = st.radio(
         'Seleccione una opción de informe:',
@@ -409,7 +410,7 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
                     progress_bar = st.progress(0)
                     status_text = st.empty()
                     info_text = st.empty()
-                    for i in wimuApp.getAllInforms(endDate=end_date, beginDate= start_date):
+                    for i in wimuApp.getAllInforms_V2(endDate=end_date, beginDate= start_date):
                         progress_bar.progress(i)
                         status_text.text(f"Progreso: {round(i*100)}%")
                         info_text.info("Esto puede tomar un momento...")
@@ -427,7 +428,56 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
             #.................................................................................................................................................
             if  st.session_state.informAlreadyDone: #Ya se generó el informe       
                 st.markdown(f"## Informe de sesiones - {st.session_state.opcionEq_seleccionadaLast}")
-                semaforo, tablas, graficos = st.tabs(["Semaforo", "Tablas completas", "Sesión / Jugador Específico"])
+                semaforo, delta, std, tablas, graficos = st.tabs(["🚦Semaforo", "𝚫 Delta", "📊 Estadísticas MD", "🗂 Tablas completas", "📒 Sesión / Jugador Específico"])
+                
+                with delta:
+                    with st.expander("Varios jugadores"):
+                        input_ses = st.selectbox("Seleccione una sesión:", wimuApp.listaSesiones, key="many")
+                        l=wimuApp.getDeltaSes(input_ses)
+                        col1, col2, col3, col4 = st.columns(4)
+                        for i in l:
+                            st.markdown(f"### -Jugador: {i["Delta"].name}")
+                            with stylable_container(
+                            key="container_with_border1",
+                            css_styles="""
+                                {
+                                    border: 5px solid #ff4700;
+                                    border-radius: 0.5rem;
+                                    padding: calc(1em - 1px)
+                                }
+                                """,
+                            ):
+                                col1, col2, col3, col4 = st.columns(4)
+                                col1.metric("Distancia m",                  i["Resultado"]["Distancia m"]                  ,i["Delta"]["Distancia m"]                  )
+                                col2.metric("HSRAbsDistance",               i["Resultado"]["HSRAbsDistance"]               ,i["Delta"]["HSRAbsDistance"]               )
+                                col3.metric("highIntensityAccAbsCounter",   i["Resultado"]["highIntensityAccAbsCounter"]   ,i["Delta"]["highIntensityAccAbsCounter"]   )
+                                col4.metric("highIntensityDecAbsCounter",   i["Resultado"]["highIntensityDecAbsCounter"]   ,i["Delta"]["highIntensityDecAbsCounter"]   )
+                            
+                    with st.expander("1 jugador"):
+                        input_ses = st.selectbox("Seleccione una sesión:", wimuApp.listaSesiones, key="only")
+                        input_jug = st.selectbox("Seleccione un jugador:", sorted(wimuApp.compInform.query('Sesión == @input_ses')["Jugador"].to_list()))
+                        delta, resXJugXSes, _, _ =wimuApp.getDeltaPlaySes(input_ses, input_jug)
+
+                        with stylable_container(
+                        key="container_with_border1",
+                        css_styles="""
+                            {
+                                border: 5px solid #ff4700;
+                                border-radius: 0.5rem;
+                                padding: calc(1em - 1px)
+                            }
+                            """,
+                        ):
+
+                            col1, col2, col3, col4 = st.columns(4)
+                            col1.metric("Distancia m",                  resXJugXSes["Distancia m"]                  ,delta["Distancia m"]                  )
+                            col2.metric("HSRAbsDistance",               resXJugXSes["HSRAbsDistance"]               ,delta["HSRAbsDistance"]               )
+                            col3.metric("highIntensityAccAbsCounter",   resXJugXSes["highIntensityAccAbsCounter"]   ,delta["highIntensityAccAbsCounter"]   )
+                            col4.metric("highIntensityDecAbsCounter",   resXJugXSes["highIntensityDecAbsCounter"]   ,delta["highIntensityDecAbsCounter"]   )
+
+
+
+
                 with semaforo:
                     if st.session_state.semStatus:
                         if st.checkbox("Semaforo completo"):
@@ -438,6 +488,10 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
                             st.write(concat_styled)
                     else:
                         st.error('Error generando semaforo', icon="🚨")
+                with std:
+                    my_md = st.selectbox('Selecciona un MD:', md)
+                    st.markdown(f"### {my_md}")
+                    st.dataframe(wimuApp.getMDStad(my_md))
 
                 with tablas:
                     col1, col2 = st. columns(2)

@@ -1,5 +1,6 @@
 from API_FrameWork import *
-hoy = pd.Timestamp(datetime.now())
+import pytz
+hoy = pd.Timestamp(datetime.now(tz=pytz.timezone('America/Costa_Rica')))
 #WIMU:
 
 try: #Leer token del archivo:
@@ -22,6 +23,7 @@ urlsWimu ={
       "urlClub":    "https://wimupro.wimucloud.com/apis/rest/clubs"                                                 #Clubes
 }
 
+md=['MD', '-1 MD', '-2 MD', '-3 MD', '-4 MD', '-5 MD', '>-5 MD', '+1 MD', '+- MD', '+2 MD', 'No MD']
 
 """
 filterSessionData: Función que nos permite filtar la información que no interesa de una determinada sesión.
@@ -359,7 +361,7 @@ class myTeamAPIWimu(API):
 
         self.inform["Duración (min)"] = self.inform["Duración (min)"].apply(milliseconds_to_minutes) 
         self.inform["Creado (fecha)"] =	self.inform["Creado (fecha)"].apply(getMyDate)
-        self.inform['Creado (fecha)'] = self.inform['Creado (fecha)'].dt.strftime('%Y-%m-%d %H h')  # Formato YYYY-MM-DD
+        self.inform['Creado (fecha)'] = self.inform['Creado (fecha)'].dt.strftime('%Y-%m-%d %H h : %M min')  # Formato YYYY-MM-DD
 
         if onlyOneSes:
             self.inform.drop(columns=["Sesión"], inplace=True)
@@ -411,6 +413,64 @@ class myTeamAPIWimu(API):
         self.listaSesiones = listadoDeSesiones
         #Tenga presente que las sesiónes por defecto ya vienen ordenadas por fecha
 
+    #TODO: USAR
+    def getAllInforms_V2(self, myRange=None, beginDate=None, endDate=None):
+        if (beginDate is not None and endDate is not None):
+            mySessions = self.session.query("Creado >= @beginDate and Creado <= @endDate").index
+
+        elif myRange is not None:
+            mySessions = self.session.index[0: myRange]
+        
+        else:
+            print("ERROR")
+            return None
+
+        myTempArray = []
+
+        self.myUrl ="https://wimupro.wimucloud.com/apis/rest/informs"
+        myTempArray = []
+
+        j=0
+        for i in mySessions:
+            j+=1
+            yield (j / len(mySessions)) #Devolver el porcentaje de avance
+        
+            self.mySession = self.session.loc[i] 
+            self.parameters = {
+                "task": "Drills",
+                "session": self.mySession.name,
+                "informTypes": "intervalsindoor",
+                "page": 1,
+                "limit": 200,
+                "team": self.myTeam,
+                "sort":  "end,desc"
+            }
+
+            self.inform= self.doRequest()
+            a =                                   [(k["id"],self.mySession["Nombre"], k["created"]    , k["username"], k["duration"]   , k["distance"]["distance"],k["distance"]["HSRAbsDistance"],k["accelerations"]["highIntensityAccAbsCounter"],k["accelerations"]["highIntensityDecAbsCounter"]) for k in self.inform]
+
+            myTempArray.extend(a)
+            
+            #yield (j / len(mySessions)) #Devolver el porcentaje de avance
+
+        print("¡DESCARGA DE TODAS LAS SESIONES FINALIZADA!")
+        self.compInform = pd.DataFrame(myTempArray, columns=['id'    , "Sesión",'Creado (fecha)', "Jugador"  , "Duración (min)", "Distancia m",            "HSRAbsDistance",               "highIntensityAccAbsCounter"                    ,"highIntensityDecAbsCounter"])
+        self.compInform["Duración (min)"] = self.compInform["Duración (min)"].apply(milliseconds_to_minutes) 
+        self.compInform["Creado (fecha)"] =	self.compInform["Creado (fecha)"].apply(getMyDate)
+        self.compInform['Creado (fecha)'] = self.compInform['Creado (fecha)'].dt.strftime('%Y-%m-%d %H h %M min')  # Formato YYYY-MM-DD
+
+        self.listaJugadores = np.sort(pd.unique(self.compInform["Jugador"])) #Lista de Jugadores en el informe
+        
+        listadoDeSesiones= []
+        cop=self.compInform.copy().sort_values(by="Creado (fecha)", ascending=False)
+
+        for i in cop["Sesión"].tolist():
+            if i not in listadoDeSesiones:
+                listadoDeSesiones.append(i)
+        self.listaSesiones = listadoDeSesiones
+
+        #Tenga presente que las sesiónes por defecto ya vienen ordenadas por fecha
+
     """
    getAllInformsByXData: Obtener el informe de sesión 
    inputs:
@@ -421,7 +481,7 @@ class myTeamAPIWimu(API):
     def getAllInformsByXData(self, data): #Sesión o Jugador
         if (data == "Sesión"):      #Ordenar por fecha
             dataX = "Jugador" 
-            self.compInformByXData = self.compInform.sort_values(by=["Creado (fecha)", "Jugador"], ascending=[False, True])
+            self.compInformByXData = self.compInform.sort_values(by=["Creado (fecha)", dataX], ascending=[False, True])
 
         elif (data == "Jugador"):   #Ordenar por jugador (en ordén alfabetico)
             dataX = "Sesión" 
@@ -530,6 +590,80 @@ class myTeamAPIWimu(API):
             return True
         else: 
             return False
+    
+    def getMDStad(self, md_input):
+        md_ses = wimuApp.session.set_index("Nombre")[["matchDay"]].loc[wimuApp.listaSesiones]
+        md_ses = md_ses.query("matchDay == @md_input").index
+
+        print(md_input)
+        estd=wimuApp.compInform.set_index("Sesión").loc[md_ses][["Distancia m",	"HSRAbsDistance",	"highIntensityAccAbsCounter",	"highIntensityDecAbsCounter"]].describe()
+        estd.index=["Núm de datos","Promedio", "Desviación estandar", 'min', '25%', '50%', '75%', 'max']
+        estd=estd.iloc[1:]
+        return estd
+
+    def getMdDic(self):
+        global md_dic
+        md_dic ={}
+        for i in md:                        # Obtener md_dic
+            md_dic[i] = self.session.query('matchDay == @i')["Nombre"].tolist()
+        return md_dic
+
+    def findMdForSes(ses):
+        for llave, array in md_dic.items():  
+            if ses in array:
+                llave_con_n = llave
+                break  # Deja de buscar una vez que se encuentra el elemento
+        return llave_con_n
+
+
+    def getDeltaPlaySes(self, input_Ses, input_jug, md=None):
+        if not md:
+            md=self.session.query("Nombre == @ input_Ses")["matchDay"].iloc[0] # 1 - Encontrar el MD de la sesión
+        
+        # -----------------------------------------------------------------------------------------------------
+        #2 - Encontrar los resultados de  la sesión x jugador
+        resXJugXSes = self.compInform.query("Sesión == @input_Ses and Jugador== @input_jug").iloc[0, 5:]
+        # -----------------------------------------------------------------------------------------------------
+        #3 - Obtener promedio del MD x Jugador
+
+        l=self.session.query("matchDay == @md")["Nombre"].to_list() 
+
+        # Sesiones del informe que coinciden con el MD correspondiente
+        l= np.intersect1d(self.listaSesiones,l) 
+        
+        # Resultados de todas las sesiones por MD:
+        XMDxJug = self.compInform.set_index("Sesión").loc[l].query("Jugador == @input_jug").sort_values(by="Creado (fecha)").iloc[:,4:]
+        promXMDxJug=XMDxJug.mean()                 
+
+
+        delta=resXJugXSes-promXMDxJug
+        delta.name = resXJugXSes.name = input_jug
+        
+        delta = pd.to_numeric(delta).round(2)
+        resXJugXSes= pd.to_numeric(resXJugXSes).round(2)
+
+        return delta, resXJugXSes, XMDxJug, promXMDxJug
+    
+    def getDeltaSes(self, input_Ses):
+        md_f=self.session.query("Nombre == @ input_Ses")["matchDay"].iloc[0] # 2 - Encontrar el MD de la sesión
+        # -----------------------------------------------------------------------------------------------------
+        myTemList =[]
+        #Para cada jugador ...
+        for jugador in self.compInform.query("Sesión == @input_Ses")["Jugador"]:
+            r = self.getDeltaPlaySes(input_Ses, jugador, md_f)
+            myTemList.append({"Delta": r[0], "Resultado": r[1]})
+        
+        return myTemList
+    
+wimuApp= myTeamAPIWimu(header=headersWimu, urls=urlsWimu) #Crear objeto con la clase
+
+
+def findMdForSes(ses):
+    for llave, array in md_dic.items():  
+        if ses in array:
+            llave_con_n = llave
+            break  # Deja de buscar una vez que se encuentra el elemento
+    return llave_con_n
 
 #---------------------------------------------------------------------------------------------------------------
 """
@@ -610,12 +744,9 @@ getMdayZscore: Función para obtener el promedio de z score para cada jugador po
     -md_dic: Diccionario que contiene en cada value, una lista con las sesiones correspondientes a cada sesión.
 """
 def getMdayZscore():
-    global md_table, md_dic, md_ser
-    md=['MD', '-1 MD', '-2 MD', '-3 MD', '-4 MD', '-5 MD', '>-5 MD', '+1 MD', '+- MD', '+2 MD', 'No MD']
+    global md_table, md_dic, md_ser 
 
-    md_dic ={}
-    for i in md:                        # Obtener md_dic
-        md_dic[i] = wimuApp.session.query('matchDay == @i')["Nombre"].tolist()
+    wimuApp.getMdDic()
 
     j_md = []
     for n in wimuApp.listaJugadores:    #Para cada jugador...
@@ -641,7 +772,7 @@ getMDAYTable: Función que busca el tipo de MD que fue cada sesión y genera una
 -outputs:
     -tablaSemaforo: Resultados de Z - score por sesión según el MD para todos los jugadores
 """
-def getMDAYTable():
+def getMDAYTableV2():
     global tablaSemaforo, tablaSemaforo_styled, matchType
     tempList  = []
     matchType = []
@@ -690,6 +821,48 @@ def getMDAYTable():
 
     return tablaSemaforo, tablaSemaforo_styled
 
+def getMDAYTable():
+    global tablaSemaforo, tablaSemaforo_styled, matchType
+    tempList  = []
+    matchType = []
+    for n in wimuApp.listaSesiones: #Buscar el tipo de MD que fue cada sesión y obtener los resultados por sesión
+        for llave, array in md_dic.items():  
+            if n in array:
+                llave_con_n = llave
+                break  # Deja de buscar una vez que se encuentra el elemento
+        matchType.append(llave_con_n)
+        df=informe_SesZ.loc[n][["Z score Average"]].copy().sort_index()
+
+        miM=md_table.loc[df.index][llave_con_n] #Obtener el promedio para el tipo de Mathc day
+        df=pd.concat([df,miM], axis=1)
+
+        # Añadir una nueva columna basada en la comparación
+
+        df[n] = df["Z score Average"]-df[llave_con_n] #(PROMEDIO Z SCORE SESIÓN - Z SCORE TIPO DE MD)
+        df=df[[n]]
+        tempList.append(df)
+
+    #Formmatear la tabla "tablaSemaforo":
+    #-------------------------------------------------------------------------------------
+    ## Combinar los DataFrames
+    tablaSemaforo = pd.concat(tempList, axis=1).sort_index() #CONCATENAR RESULTADOS
+
+    try:
+        fechas = wimuApp.session.set_index("Nombre").loc[wimuApp.listaSesiones]["Creado"].tolist()
+    except KeyError:
+        newColumns= [(tablaSemaforo.columns[i], matchType[i], None) for i in range (len(tablaSemaforo.columns))]
+    else:
+        fechas=[fecha.strftime('%Y-%m-%d %H:%M') for fecha in fechas]
+        newColumns= [(tablaSemaforo.columns[i], matchType[i], fechas[i]) for i in range (len(tablaSemaforo.columns))]
+    
+    newColumns = pd.MultiIndex.from_tuples(newColumns, names=["SESIONES", "MD", "FECHA"])
+
+    tablaSemaforo = pd.DataFrame(tablaSemaforo.to_numpy(), columns=newColumns, index=tablaSemaforo.index)
+    tablaSemaforo=tablaSemaforo.fillna("Sin datos")
+    tablaSemaforo_styled = tablaSemaforo.astype(str).style.map(colorear_celdas)
+    tablaSemaforo_styled = tablaSemaforo_styled.format(truncate)
+
+    return tablaSemaforo, tablaSemaforo_styled
 def SemIndv(sessionValue):       
     tablaSemaforoV1 = tablaSemaforo.copy()
     tablaSemaforoV1.columns=tablaSemaforoV1.columns.droplevel("FECHA")
@@ -706,7 +879,8 @@ def SemIndv(sessionValue):
     concat_styled = concat_styled.map(color_unico, subset=[md])
     return datos, seleccion, concat, seleccion_styled, concat_styled
 
+#----------------------------------------------------------------------------------------------------------------
 
 
 
-wimuApp= myTeamAPIWimu(header=headersWimu, urls=urlsWimu) #Crear objeto con la clase
+
