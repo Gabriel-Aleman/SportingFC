@@ -2,7 +2,9 @@ from API_FrameWork import *
 
 
 # Obtén el Timestamp actual con la zona horaria
-hoy = pd.Timestamp()
+
+
+hoy = pd.Timestamp(datetime.now())
 #WIMU:
 
 try: #Leer token del archivo:
