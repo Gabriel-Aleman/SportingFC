@@ -600,7 +600,6 @@ class myTeamAPIWimu(API):
         md_ses = wimuApp.session.set_index("Nombre")[["matchDay"]].loc[wimuApp.listaSesiones]
         md_ses = md_ses.query("matchDay == @md_input").index
 
-        print(md_input)
         estd=wimuApp.compInform.set_index("Sesión").loc[md_ses][["Distancia m",	"HSRAbsDistance",	"highIntensityAccAbsCounter",	"highIntensityDecAbsCounter"]].describe()
         estd.index=["Núm de datos","Promedio", "Desviación estandar", 'min', '25%', '50%', '75%', 'max']
         estd=estd.iloc[1:]
@@ -647,7 +646,7 @@ class myTeamAPIWimu(API):
         delta = pd.to_numeric(delta).round(2)
         resXJugXSes= pd.to_numeric(resXJugXSes).round(2)
 
-        return delta, resXJugXSes, XMDxJug, promXMDxJug
+        return delta, resXJugXSes, XMDxJug, promXMDxJug, md
     
     def getDeltaSes(self, input_Ses):
         md_f=self.session.query("Nombre == @ input_Ses")["matchDay"].iloc[0] # 2 - Encontrar el MD de la sesión
@@ -659,6 +658,17 @@ class myTeamAPIWimu(API):
             myTemList.append({"Delta": r[0], "Resultado": r[1]})
         
         return myTemList
+    
+    #Obtener tabla con promedios por MD
+    def dataXMD(self):
+        my_md_Data = [(md_i, self.getMDStad(md_i)) for md_i in  md]
+
+        proms=pd.DataFrame()
+        for element in my_md_Data:
+            prom = element[1].loc[["Promedio"]]
+            prom.index = [element[0]]  
+            proms = pd.concat([proms, prom])
+        return proms
     
 wimuApp= myTeamAPIWimu(header=headersWimu, urls=urlsWimu) #Crear objeto con la clase
 

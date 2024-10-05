@@ -6,6 +6,7 @@ from io import BytesIO
 from streamlit_extras.colored_header import colored_header
 from streamlit_extras.stylable_container import stylable_container
 from streamlit_extras.let_it_rain import rain
+from streamlit_navigation_bar import st_navbar
 
 
 def loadAllMyData():
@@ -182,6 +183,10 @@ img {{
 <img src="{image_path}" width="100">
 """
 
+#NAVBAR:
+
+page = st_navbar(["WIMU", "GESDEP", "VALD"])
+
 # Título de la aplicación
 col1, col2 = st.columns([1,7])
 
@@ -194,12 +199,12 @@ st.markdown('-----------------------')
 
 col1, col2 = st.columns(2)
 with col1:
-    colored_header(label="Clubes en la base de datos", description="", color_name="violet-70", )
+    colored_header(label="Clubes en base de datos", description="", color_name="violet-70", )
     with st.expander("Clubes"):
         st.dataframe(wimuApp.Club)
 
 with col2:
-    colored_header(label="Equipos en la base de datos", description="", color_name="violet-70", )
+    colored_header(label="Equipos en base de datos", description="", color_name="violet-70", )
     with st.expander("Equipos"):
         st.dataframe(wimuApp.teams)
 
@@ -455,7 +460,8 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
                     with st.expander("1 jugador"):
                         input_ses = st.selectbox("Seleccione una sesión:", wimuApp.listaSesiones, key="only")
                         input_jug = st.selectbox("Seleccione un jugador:", sorted(wimuApp.compInform.query('Sesión == @input_ses')["Jugador"].to_list()))
-                        delta, resXJugXSes, _, _ =wimuApp.getDeltaPlaySes(input_ses, input_jug)
+                        delta, resXJugXSes, _, _ , md_d =wimuApp.getDeltaPlaySes(input_ses, input_jug)
+                        st.markdown(f"### {input_jug}: {input_ses} ({md_d})")
 
                         with stylable_container(
                         key="container_with_border1",
@@ -467,7 +473,6 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
                             }
                             """,
                         ):
-
                             col1, col2, col3, col4 = st.columns(4)
                             col1.metric("Distancia m",                  resXJugXSes["Distancia m"]                  ,delta["Distancia m"]                  )
                             col2.metric("HSRAbsDistance",               resXJugXSes["HSRAbsDistance"]               ,delta["HSRAbsDistance"]               )
@@ -488,9 +493,35 @@ if st.session_state.sesListAlreadyDone: #No se puede acceder a las demás opcion
                     else:
                         st.error('Error generando semaforo', icon="🚨")
                 with std:
-                    my_md = st.selectbox('Selecciona un MD:', md)
-                    st.markdown(f"### {my_md}")
-                    st.dataframe(wimuApp.getMDStad(my_md))
+                    my_md_Data = [(md_i, wimuApp.getMDStad(md_i)) for md_i in  md]
+                    proms = wimuApp.dataXMD()
+
+                    with st.expander("Tablas"):
+                        for j in my_md_Data: 
+                            st.write(j[0])
+                            st.write(j[1])
+
+                        st.markdown("### Promedios de todos los md:")
+                        st.write(proms)
+
+                    with st.expander("Gráficos"):
+                        if st.checkbox("Distancia m", key="a"):
+                            st.pyplot(graphMDPromsXCol(proms, "Distancia m"))
+
+                        if st.checkbox("HSRAbsDistance", key="b"):
+                            st.pyplot(graphMDPromsXCol(proms, "HSRAbsDistance"))
+
+                        if st.checkbox("highIntensityAccAbsCounter", key="c"):
+                            st.pyplot(graphMDPromsXCol(proms, "highIntensityAccAbsCounter"))
+
+                        if st.checkbox("highIntensityDecAbsCounter", key="d"):
+                            st.pyplot(graphMDPromsXCol(proms, "highIntensityDecAbsCounter"))
+
+                        if st.checkbox("Todos: "):
+                            st.pyplot(graphMDProms(proms))
+                        
+
+                        
 
                 with tablas:
                     col1, col2 = st. columns(2)

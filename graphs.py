@@ -1,6 +1,31 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+def graphMDProms(df):
+    # Crear subplots con una cuadrícula de 2x2
+    fig, axes = plt.subplots(2, 2)  # Ajustar tamaño según se necesite
+
+    # Iterar sobre cada columna y su correspondiente posición en la cuadrícula
+    for i, col in enumerate(df.columns):
+        ax = axes[i//2, i%2]  # Determinar la posición del subplot (fila, columna)
+        df[col].plot(kind='bar', ax=ax, color='#cc60c1')
+        ax.set_title(col, fontweight='bold')
+        ax.tick_params(axis='x', rotation=90)  # Mantener etiquetas de índice horizontal
+        ax.grid(axis="y")
+    # Ajustar el diseño para evitar superposiciones
+    plt.tight_layout()
+    
+    return fig
+
+
+def graphMDPromsXCol(df, col):
+    df[col].plot(kind='bar', color = "#a276a3")
+    plt.title(col, fontweight='bold')
+    plt.grid(axis="y")
+    return plt.gcf()
+
+#---------------------------------------------------------------------------------------------------------------
+
 def barZ(df, dfProm, ses=None, jugador=None):
     df = df.loc[ses] if  (ses is not None) else  df.loc[jugador] if  (jugador is not None) else None
     dfProm = dfProm.loc[ses]["Promedios Z score"] if  (ses is not None) else  dfProm.loc[jugador]["Promedios Z score"] if  (jugador is not None) else None
