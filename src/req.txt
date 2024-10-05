@@ -1,9 +1,0 @@
-numpy       
-pandas    
-requests  
-matplotlib  
-tkinter       
-Pillow      
-datetime  
-os          
-re          
