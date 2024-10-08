@@ -6,3 +6,4 @@ streamlit==1.37.0
 streamlit_extras==0.4.7
 numpy==1.26.1
 xlsxwriter==3.2.0
+streamlit-navigation-bar==3.3.0
