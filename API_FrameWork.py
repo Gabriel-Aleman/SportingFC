@@ -6,9 +6,12 @@ from datetime import datetime,  timedelta
 milliseconds_to_minutes: Convertir milisegundos a minutos
 """
 def milliseconds_to_minutes(milliseconds):
-    seconds = milliseconds / 1000  # Convertir milisegundos a segundos
-    minutes = seconds / 60  # Convertir segundos a minutos
-    return round(minutes)
+    if milliseconds >= 0:
+        seconds = milliseconds / 1000  # Convertir milisegundos a segundos
+        minutes = seconds / 60  # Convertir segundos a minutos
+        return round(minutes)
+    else:
+        return  np.nan
 
 """
 getMyDate: Obtener fecha a partir de un timestamp (ms)
