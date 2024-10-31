@@ -82,9 +82,9 @@ class myTeamAPIWimu(API):
     getTeams: Método para obtener una lista de todos los equipos matriculados asociados.
     """
     def getTeams(self):
-        teams = self.doRequest(self.urls["urlTeams"])
+        self.teams = self.doRequest(self.urls["urlTeams"])
         
-        self.teams = [(i["id"], i["name"], i["abbreviation"])  for i in teams]
+        self.teams = [(i["id"], i["name"], i["abbreviation"])  for i in self.teams]
         
         self.teams = pd.DataFrame(self.teams, columns=["id", "Nombre", "Abreviatura"])
         self.teams.set_index('id', inplace=True)
